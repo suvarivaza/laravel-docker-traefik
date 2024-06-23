@@ -17,23 +17,23 @@ services:
       - "--certificatesresolvers.le.acme.tlschallenge=true"
       - "--certificatesresolvers.le.acme.email=${TRAEFIK_EMAIL}"
       - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
-#      - "--certificatesresolvers.le.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+    #      - "--certificatesresolvers.le.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
     ports:
-#      - "80:80" # HTTP port
+      # - "80:80" # HTTP port
       - "443:443" # HTTPS port
-#      - "8080:8080" # The Web UI (enabled by --api.insecure=true)
+      # - "8080:8080" # The Web UI (enabled by --api.insecure=true)
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro" # So that Traefik can listen to the Docker events
       - "letsencrypt:/letsencrypt"
     networks:
       - net
-    php:
-      labels:
-        - "traefik.enable=true" # Explicitly tell Traefik to expose this container
-        - "traefik.http.services.php.loadbalancer.server.port=8080"
-        - "traefik.http.routers.php.rule=Host(`${TRAEFIK_APP_URL}`)" # The domain the service will respond to
-        - "traefik.http.routers.api.entrypoints=http" # Allow request only from the predefined entry point named "http"
-        - "traefik.http.routers.php.tls.certresolver=le"
+  php:
+    labels:
+      - "traefik.enable=true" # Explicitly tell Traefik to expose this container
+      - "traefik.http.services.php.loadbalancer.server.port=8080"
+      - "traefik.http.routers.php.rule=Host(`${TRAEFIK_APP_URL}`)" # The domain the service will respond to
+      - "traefik.http.routers.api.entrypoints=http" # Allow request only from the predefined entry point named "http"
+      - "traefik.http.routers.php.tls.certresolver=le"
 volumes:
   letsencrypt:
     driver: local
