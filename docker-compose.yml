@@ -1,0 +1,90 @@
+services:
+    php:
+        build:
+            context: ./php
+            dockerfile: Dockerfile
+        restart: always
+        tty: true
+        environment:
+            #https://serversideup.net/open-source/docker-php/docs/reference/environment-variable-specification
+            - "SSL_MODE=off"
+            - "AUTORUN_ENABLED=true"
+            - "PHP_MEMORY_LIMIT=512M"
+            - "PHP_POST_MAX_SIZE=50M"
+            - "PHP_UPLOAD_MAX_FILE_SIZE=50M"
+            - "PHP_MAX_EXECUTION_TIME=60"
+        volumes:
+            - '..:/var/www/html'
+        depends_on:
+            - mysql
+            - redis
+        networks:
+            - net
+    mysql:
+        image: mysql:8.0
+        restart: always
+        tty: true
+        env_file:
+           - ".env"
+           - "../.env"
+        environment:
+            - "MYSQL_ROOT_PASSWORD=${DB_PASSWORD:-secret}"
+            - "MYSQL_USER=${DB_USERNAME:-user}"
+            - "MYSQL_PASSWORD=${DB_PASSWORD:-secret}"
+            - "MYSQL_DATABASE=${DB_DATABASE:-laravel}"
+        volumes:
+            - database:/var/lib/mysql
+        ports:
+            - "3306:3306"
+        networks:
+            - net
+        healthcheck:
+            test:
+                - CMD
+                - mysqladmin
+                - ping
+                - '-p${DB_PASSWORD:-secret}'
+            retries: 3
+            timeout: 5s
+    phpmyadmin:
+        image: phpmyadmin
+        container_name: phpmyadmin
+        restart: always
+        env_file:
+          - ".env"
+          - "../.env"
+        environment:
+            - "PMA_HOST=${DB_HOST:-mysql}"
+            - "PMA_USER=${DB_USERNAME:-user}"
+            - "PMA_PASSWORD=${DB_PASSWORD:-secret}"
+            - "UPLOAD_LIMIT=64M"
+        ports:
+            - 8081:80
+        depends_on:
+            - mysql
+        networks:
+            - net
+    redis:
+        image: 'redis:alpine'
+        restart: always
+        ports:
+            - '${REDIS_PORT:-6379}:6379'
+        volumes:
+            - 'redis:/data'
+        healthcheck:
+            test:
+                - CMD
+                - redis-cli
+                - ping
+            retries: 3
+            timeout: 5s
+        networks:
+            - net
+volumes:
+    database:
+        driver: local
+    redis:
+        driver: local
+networks:
+    net:
+        driver: bridge
