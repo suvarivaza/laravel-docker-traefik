@@ -1,3 +1,4 @@
+
 services:
     php:
         build:
@@ -24,14 +25,11 @@ services:
         image: mysql:8.0
         restart: always
         tty: true
-        env_file:
-           - ".env"
-           - "../.env"
         environment:
-            - "MYSQL_ROOT_PASSWORD=${DB_PASSWORD:-secret}"
-            - "MYSQL_USER=${DB_USERNAME:-user}"
-            - "MYSQL_PASSWORD=${DB_PASSWORD:-secret}"
-            - "MYSQL_DATABASE=${DB_DATABASE:-laravel}"
+            - "MYSQL_ROOT_PASSWORD=${DB_PASSWORD}"
+            - "MYSQL_USER=${DB_USERNAME}"
+            - "MYSQL_PASSWORD=${DB_PASSWORD}"
+            - "MYSQL_DATABASE=${DB_DATABASE}"
         volumes:
             - database:/var/lib/mysql
         ports:
@@ -43,20 +41,17 @@ services:
                 - CMD
                 - mysqladmin
                 - ping
-                - '-p${DB_PASSWORD:-secret}'
+                - '-p${DB_PASSWORD}'
             retries: 3
             timeout: 5s
     phpmyadmin:
         image: phpmyadmin
         container_name: phpmyadmin
         restart: always
-        env_file:
-          - ".env"
-          - "../.env"
         environment:
-            - "PMA_HOST=${DB_HOST:-mysql}"
-            - "PMA_USER=${DB_USERNAME:-user}"
-            - "PMA_PASSWORD=${DB_PASSWORD:-secret}"
+            - "PMA_HOST=${DB_HOST}"
+            - "PMA_USER=${DB_USERNAME}"
+            - "PMA_PASSWORD=${DB_PASSWORD}"
             - "UPLOAD_LIMIT=64M"
         ports:
             - 8081:80
