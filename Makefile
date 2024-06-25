@@ -16,6 +16,9 @@ restart: ## Restart ALL containers
 php-bash: ## Connect to php bash
 	docker compose exec php bash
 
+php-bash-root: ## Connect to php bash
+	docker compose exec -u 0 php bash
+
 logs: ## Logs containers
 	docker compose logs -f --tail=20 $(name)
 
@@ -31,24 +34,42 @@ down-ci: ## Delete containers and images
 down-all: ## WARNING! Delete ALL! containers / networks / images / volumes
 	docker compose down -v --rmi all $(name)
 
-laravel-install: ## Install laravel
+
+#============= Laravel ===============#
+
+laravel-install: ## Install Laravel
 	docker compose exec php composer create-project laravel/laravel example-app \
 	&& mv -f ../example-app/* ../ && mv -f ../example-app/.* ../ && rm -rf ../example-app
 
-laravel-upl:
-	make restart
+composer-install: ## composer install
+	docker compose exec -u 0 php composer install --no-cache --ansi --no-interaction
 
-npm-install:
+npm-install: ## npm install
 	 docker compose exec node npm install
 
-npm-build:
+npm-build: ## npm run build
 	 docker compose exec node npm run build
 
-npm-dev:
+npm-dev: ## npm run dev
 	 docker compose exec node npm run dev
 
-tinker:
+tinker: ## php artisan tinker
 	docker compose exec php php artisan tinker
+
+migrate: ## php artisan migrate
+	docker compose exec php php artisan migrate
+
+
+#============= Database ===============#
+
+db-import: ## Import database from file: db-import filepath=db.sql
+	sudo docker exec -i docker-mysql-1 mysql -u bestpromo -p bestpromo < $(filepath)
+
+
+#============= Portainer ===============#
+
+portainer-install: ## Install portainer
+	docker run -d -p 9000:9000 --name portainer --restart always -v /var/run/docker.sock:/var/run/docker.sock portainer/portainer-ce
 
 
 #============= Help ===============#

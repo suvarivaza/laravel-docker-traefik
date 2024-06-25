@@ -30,6 +30,7 @@ FROM base as production
 WORKDIR /var/www/html
 
 COPY --chown=$PUID:$PGID .. .
+# COPY --chown=www-data:www-data .. .
 
 # Установка зависимостей
 #RUN composer install --no-cache --ansi --no-interaction \
