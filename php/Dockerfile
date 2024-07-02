@@ -20,7 +20,7 @@ USER root
 # Supported PHP extensions wich you can install by install-php-extensions here - https://github.com/mlocati/docker-php-extension-installer
 # Install extensions with install-php-extensions
 RUN set -ex; \
-    install-php-extensions intl PDO json gd exif
+    install-php-extensions intl PDO json gd exif bcmath
 
 
 # Copy our Laravel app into the Docker image

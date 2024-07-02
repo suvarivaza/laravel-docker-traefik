@@ -8,11 +8,12 @@ services:
         environment:
             #https://serversideup.net/open-source/docker-php/docs/reference/environment-variable-specification
             - "SSL_MODE=off"
-            - "AUTORUN_ENABLED=true"
+            - "AUTORUN_ENABLED=false"
             - "PHP_MEMORY_LIMIT=512M"
             - "PHP_POST_MAX_SIZE=50M"
             - "PHP_UPLOAD_MAX_FILE_SIZE=50M"
             - "PHP_MAX_EXECUTION_TIME=60"
+            - "PHP_OPCACHE_ENABLE=1"
         volumes:
             - '..:/var/www/html'
         depends_on:
