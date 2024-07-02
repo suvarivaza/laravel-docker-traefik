@@ -1,3 +1,5 @@
+include .env
+
 init-dev:
 	cp .env.dev .env && touch ../.env
 
@@ -62,9 +64,8 @@ migrate: ## php artisan migrate
 
 #============= Database ===============#
 
-db-import: ## Import database from file: db-import filepath=db.sql
-	sudo docker exec -i docker-mysql-1 mysql -u bestpromo -p bestpromo < $(filepath)
-
+db-import: ## Import database from file: make db-import filepath=../db.sql
+	sudo docker exec -i $(COMPOSE_PROJECT_NAME)-mysql-1 mysql -u $(DB_USERNAME) -p$(DB_PASSWORD) $(DB_DATABASE) < $(filepath)
 
 #============= Portainer ===============#
 
