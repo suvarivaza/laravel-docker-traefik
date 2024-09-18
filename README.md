@@ -1,4 +1,4 @@
-This is docker environment for Laravel and other PHP applications!
+This is docker compose environment for Laravel and other PHP applications!
 
 - Ready for development and production!
 - Easy to start!
@@ -17,39 +17,84 @@ git clone https://github.com/suvarivaza/laravel-docker-traefik.git docker
 cd docker
 ```
 
-### Start dev
+### Help
+```
+make help
+```
+
+### Start DEV
+
 ```
 make init-dev
+(set .env variables)
 make up
+```
+Do not forget set .env variables after command: make init-dev!
+
+> - The app will be: http://localhost/
+> - Phpmyadmin: http://localhost:8080/
+
+
+
+
+### Production
+
+```
+make init-prod
+(set .env variables)
+make up
+```
+Do not forget set .env variables after command: make init-prod!
+
+
+### Main commands:
+```
+make up
+make build
+make restart
+make down
+make logs
+```
+
+Specific service:
+```
+make up php
+make build php
+make restart php
+make down php
+make logs php
+make connect php
 ```
 
 #### Laravel commands:
 ```
 make laravel-install
-make npm-install
-make npm-dev
-make npm-build
+make composer-install
 make tinker
+make migrate
+make php-artisan tinker | php artisan migrate | and others php artisan commands ...
 ```
 
->The app will be at: http://localhost/
->Phpmyadmin at: http://localhost:8081/
-
-
-### Production
-Do not forgot ser .env variables:
-> TRAEFIK_APP_URL=your-site.com
-> TRAEFIK_EMAIL=your@email.com
-
-Then:
+#### NPM commands:
 ```
-make init-prod
-make up
+make npm install 
+make npm run build 
+make npm run dev
+..and others npm commands..
 ```
 
 
-### Vite
-For Vite just add to vite.config.js:
+
+### Additionally
+
+```
+make db-import filepath=path/db.sql
+make portainer-install
+```
+
+
+#### Laravel Vite configuration
+For Laravel Vite support just add to vite.config.js:
 ```
 server: {
             host: '0.0.0.0',

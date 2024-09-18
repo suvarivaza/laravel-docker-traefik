@@ -14,8 +14,9 @@ services:
             - "PHP_UPLOAD_MAX_FILE_SIZE=50M"
             - "PHP_MAX_EXECUTION_TIME=60"
             - "PHP_OPCACHE_ENABLE=1"
+            - "APP_PATH=${APP_PATH:-./..}"
         volumes:
-            - '..:/var/www/html'
+            - "${APP_PATH:-./..}:/var/www/html"
         depends_on:
             - mysql
             - redis
@@ -46,7 +47,6 @@ services:
             timeout: 5s
     phpmyadmin:
         image: phpmyadmin
-        container_name: phpmyadmin
         restart: always
         environment:
             - "PMA_HOST=${DB_HOST}"
@@ -54,7 +54,7 @@ services:
             - "PMA_PASSWORD=${DB_PASSWORD}"
             - "UPLOAD_LIMIT=64M"
         ports:
-            - 8081:80
+            - 8080:80
         depends_on:
             - mysql
         networks:

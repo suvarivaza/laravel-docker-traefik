@@ -1,7 +1,6 @@
 services:
   traefik:
     image: "traefik:v3.0"
-    container_name: "traefik"
     command:
       - "--log.level=DEBUG"
       - "--api.insecure=true" # Traefik will listen on port 8080 by default for API request.

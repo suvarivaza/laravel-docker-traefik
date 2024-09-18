@@ -29,7 +29,7 @@ FROM base as production
 # Установка рабочей директории
 WORKDIR /var/www/html
 
-COPY --chown=$PUID:$PGID .. .
+COPY --chown=$PUID:$PGID $APP_PATH .
 # COPY --chown=www-data:www-data .. .
 
 # Установка зависимостей
