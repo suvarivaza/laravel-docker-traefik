@@ -52,6 +52,7 @@ Do not forget set .env variables after command: make init-prod!
 make up
 make build
 make restart
+make stop
 make down
 make logs
 ```
@@ -61,6 +62,7 @@ Specific service:
 make up php
 make build php
 make restart php
+make stop php
 make down php
 make logs php
 make connect php

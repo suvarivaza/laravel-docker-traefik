@@ -54,6 +54,9 @@ restart: ## Restart all services | restart one service: make restart php
 hard-restart: ## Hard restart ALL services (make down && make up)
 	make down && make up
 
+stop: ## Stop all services | stop one service: make stop php
+	docker compose $(DOCKER_ENV_FILES) stop $(ARGS)
+
 connect: ## Connect to service. Example: make connect php
 	docker compose exec $(ARGS) bash
 
