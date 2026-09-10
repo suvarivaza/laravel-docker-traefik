@@ -1,119 +1,160 @@
-DOCKER_ENV_FILES=--env-file .env
-
-# include default env file
-ifneq ("$(wildcard .env)","")
-    include .env
-endif
-
-# include application env file
-ifneq ("$(wildcard $(APP_PATH)/.env)","")
-    include $(APP_PATH)/.env
-    DOCKER_ENV_FILES=--env-file .env --env-file $(APP_PATH)/.env
-endif
-
-
-# Get arguments from command line. For example ARGS=value for command line: make command value
-#https://stackoverflow.com/questions/6273608/how-to-pass-argument-to-makefile-from-command-line
-ARGS=$(filter-out $@,$(MAKECMDGOALS))
-
-COUNT_ARGS := $(shell echo $(ARGS) | wc -w)
-
-# Error if arguments more then 3
-ifeq ($(shell expr $(COUNT_ARGS) \> 3), 1)
- $(error Maximum 3 arguments are allowed for make command! Example 2 arg: make up php | Example 3 arg: make npm run dev)
-endif
-
+# Compose parses .env itself; Laravel dotenv files are not Make syntax.
+COMPOSE = docker compose --env-file .env
+COMMAND := $(firstword $(MAKECMDGOALS))
+ARGS ?= $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
 
 #============= Help ===============#
 .PHONY: help
+ifeq ($(filter help,$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))),)
 help:
 	@echo ======= Help =======
 	@echo 'You can pass the third parameter to the make command like this: make up php'
-	@egrep -h '^[^[:blank:]].*\s##\s' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}'
+	@grep -h -E '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}'
+endif
 
 .DEFAULT_GOAL := help
 
 
 #============= Init ===============#
+ifeq ($(filter init-dev,$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))),)
 init-dev: ## Init dev environments
+	@test ! -e .env || { echo ".env already exists; edit it or move it first."; exit 1; }
 	cp .env.dev .env
+endif
 
+ifeq ($(filter init-prod,$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))),)
 init-prod: ## Init prod environments
+	@test ! -e .env || { echo ".env already exists; edit it or move it first."; exit 1; }
 	cp .env.prod .env
+endif
 
 #============= Start ===============#
+ifeq ($(filter up,$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))),)
 up: ## Start all services | up one service: make up php
-	docker compose $(DOCKER_ENV_FILES) up -d --build $(ARGS)
+	$(COMPOSE) up -d --build $(ARGS)
+endif
 
+ifeq ($(filter build,$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))),)
 build: ## Build all services | build one service: make build php
-	docker compose $(DOCKER_ENV_FILES) build --no-cache $(ARGS)
+	$(COMPOSE) build --no-cache $(ARGS)
+endif
 
+ifeq ($(filter restart,$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))),)
 restart: ## Restart all services | restart one service: make restart php
-	docker compose restart $(ARGS)
+	$(COMPOSE) restart $(ARGS)
+endif
 
-hard-restart: ## Hard restart ALL services (make down && make up)
-	make down && make up
+ifeq ($(filter hard-restart,$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))),)
+hard-restart: ## Hard restart ALL services ($(MAKE) down && $(MAKE) up)
+	$(MAKE) down && $(MAKE) up
+endif
 
+ifeq ($(filter stop,$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))),)
 stop: ## Stop all services | stop one service: make stop php
-	docker compose $(DOCKER_ENV_FILES) stop $(ARGS)
+	$(COMPOSE) stop $(ARGS)
+endif
 
+ifeq ($(filter connect,$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))),)
 connect: ## Connect to service. Example: make connect php
-	docker compose exec $(ARGS) bash
+	$(COMPOSE) exec $(ARGS) bash
+endif
 
+ifeq ($(filter connect-root,$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))),)
 connect-root: ## Connect to service as root. Example: make connect-root php
-	docker compose exec -u 0 $(ARGS) bash
+	$(COMPOSE) exec -u 0 $(ARGS) bash
+endif
 
+ifeq ($(filter logs,$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))),)
 logs: ## Logs all services | one service: make logs php
-	docker compose logs -f --tail=20 $(ARGS)
+	$(COMPOSE) logs -f --tail=20 $(ARGS)
+endif
 
+ifeq ($(filter down,$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))),)
 down: ## Delete all services | one service: make down php
-	docker compose down $(ARGS)
+	$(COMPOSE) down $(ARGS)
+endif
 
+ifeq ($(filter down-cont-vol,$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))),)
 down-cont-vol: ## Delete all containers and volumes | one service: make down-cont-vol php
-	docker compose down -v $(ARGS)
+	$(COMPOSE) down -v $(ARGS)
+endif
 
+ifeq ($(filter down-cont-img,$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))),)
 down-cont-img: ## Delete all containers and images | one service: make down-cont-img php
-	docker compose down --rmi all $(ARGS)
+	$(COMPOSE) down --rmi all $(ARGS)
+endif
 
+ifeq ($(filter down-all,$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))),)
 down-all: ## WARNING! Delete ALL! containers / networks / images / volumes | one service: make down-all php
-	docker compose down -v --rmi all $(ARGS)
+	$(COMPOSE) down -v --rmi all $(ARGS)
+endif
 
+ifeq ($(filter ps,$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))),)
 ps: ## Show containers.
-	docker compose $(DOCKER_ENV_FILES) ps
+	$(COMPOSE) ps
+endif
 
+ifeq ($(filter config,$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))),)
 config: ## Show containers.
-	docker compose $(DOCKER_ENV_FILES) config
+	$(COMPOSE) config
+endif
 
 
 #============= Laravel ===============#
+ifeq ($(filter laravel-install,$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))),)
 laravel-install: ## Install Laravel
-	docker compose exec php composer create-project laravel/laravel example-app \
-	&& mv -f $(APP_PATH)/example-app/* $(APP_PATH)/ && mv -f $(APP_PATH)/example-app/.* $(APP_PATH)/ && rm -rf $(APP_PATH)/example-app
+	$(COMPOSE) exec php sh -eu -c 'test ! -e example-app; composer create-project laravel/laravel example-app; for entry in example-app/* example-app/.[!.]* example-app/..?*; do [ -e "$$entry" ] || [ -L "$$entry" ] || continue; name=$${entry##*/}; if [ -e "$$name" ] || [ -L "$$name" ]; then echo "Destination already exists: $$name" >&2; exit 1; fi; done; for entry in example-app/* example-app/.[!.]* example-app/..?*; do [ -e "$$entry" ] || [ -L "$$entry" ] || continue; mv "$$entry" .; done; rmdir example-app'
+endif
 
+ifeq ($(filter composer-install,$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))),)
 composer-install: ## composer install
-	docker compose exec -u 0 php composer install --no-cache --ansi --no-interaction
+	$(COMPOSE) exec php composer install --no-cache --ansi --no-interaction
+endif
 
+ifeq ($(filter tinker,$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))),)
 tinker: ## php artisan tinker
-	docker compose exec php php artisan tinker
+	$(COMPOSE) exec php php artisan tinker
+endif
 
+ifeq ($(filter migrate,$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))),)
 migrate: ## php artisan migrate
-	docker compose exec php php artisan migrate
+	$(COMPOSE) exec php php artisan migrate
+endif
 
+ifeq ($(filter php-artisan,$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))),)
 php-artisan: ## php artisan commands. example: make php-artisan tinker | php artisan migrate | and others php artisan commands..
-	docker compose exec php php artisan $(ARGS)
+	$(COMPOSE) exec php php artisan $(ARGS)
+endif
 
 #============= NPM ===============#
+ifeq ($(filter npm,$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))),)
 npm: ## Examples: make npm install | make npm run build | make npm run dev | and others npm commands..
-	docker compose exec node npm $(ARGS)
+	$(COMPOSE) exec node npm $(ARGS)
+endif
 
 #============= Database ===============#
+ifeq ($(filter db-import,$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))),)
 db-import: ## Import database from file: make db-import filepath=../db.sql
-	sudo docker exec -i $(COMPOSE_PROJECT_NAME)-mysql-1 mysql -u $(DB_USERNAME) -p$(DB_PASSWORD) $(DB_DATABASE) < $(filepath)
+	@test -n "$(filepath)" && test -r "$(filepath)" && test -s "$(filepath)" || { echo "Set filepath to a readable, non-empty SQL dump."; exit 1; }
+	@$(COMPOSE) exec -T mysql sh -eu -c 'export MYSQL_PWD="$$MYSQL_PASSWORD"; exec mysql -u "$$MYSQL_USER" "$$MYSQL_DATABASE"' < "$(filepath)"
+endif
 
 
 #============= Portainer ===============#
+ifeq ($(filter portainer-install,$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))),)
 portainer-install: ## Install portainer
 	docker run -d -p 9000:9000 --name portainer --restart always -v /var/run/docker.sock:/var/run/docker.sock portainer/portainer-ce
+endif
 
 
 
+
+# Treat trailing words as arguments only for commands that accept them.
+ARG_COMMANDS := up build restart stop connect connect-root logs down down-cont-vol down-cont-img down-all php-artisan npm
+ifneq ($(filter $(COMMAND),$(ARG_COMMANDS)),)
+ifneq ($(strip $(ARGS)),)
+.PHONY: $(ARGS)
+$(ARGS):;@:
+endif
+endif
+.PHONY: init-dev init-prod up build restart hard-restart stop connect connect-root logs down down-cont-vol down-cont-img down-all ps config laravel-install composer-install tinker migrate php-artisan npm db-import portainer-install

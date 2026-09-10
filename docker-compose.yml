@@ -3,6 +3,9 @@ services:
         build:
             context: ./php
             dockerfile: Dockerfile
+            target: production
+            args:
+                PHP_VERSION: ${PHP_VERSION:-8.2}
         restart: always
         tty: true
         environment:
@@ -14,12 +17,14 @@ services:
             - "PHP_UPLOAD_MAX_FILE_SIZE=50M"
             - "PHP_MAX_EXECUTION_TIME=60"
             - "PHP_OPCACHE_ENABLE=1"
-            - "APP_PATH=${APP_PATH:-./..}"
+            - "APP_WEBROOT=/var/www/html/public"
         volumes:
-            - "${APP_PATH:-./..}:/var/www/html"
+            - "${APP_PATH:?Set APP_PATH in .env}:/var/www/html"
         depends_on:
-            - mysql
-            - redis
+            mysql:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
         networks:
             - net
     mysql:
@@ -27,34 +32,29 @@ services:
         restart: always
         tty: true
         environment:
-            - "MYSQL_ROOT_PASSWORD=${DB_PASSWORD}"
-            - "MYSQL_USER=${DB_USERNAME}"
-            - "MYSQL_PASSWORD=${DB_PASSWORD}"
-            - "MYSQL_DATABASE=${DB_DATABASE}"
+            - "MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}"
+            - "MYSQL_USER=${DB_USERNAME:?Set DB_USERNAME in .env}"
+            - "MYSQL_PASSWORD=${DB_PASSWORD:?Set DB_PASSWORD in .env}"
+            - "MYSQL_DATABASE=${DB_DATABASE:?Set DB_DATABASE in .env}"
         volumes:
             - database:/var/lib/mysql
-        ports:
-            - "${DB_PORT:-3306}:3306"
         networks:
             - net
         healthcheck:
-            test:
-                - CMD
-                - mysqladmin
-                - ping
-                - '-p${DB_PASSWORD}'
-            retries: 3
+            test: ["CMD-SHELL", 'MYSQL_PWD="$${MYSQL_ROOT_PASSWORD}" mysqladmin ping -h 127.0.0.1 --silent']
+            interval: 10s
+            start_period: 30s
+            retries: 5
             timeout: 5s
     phpmyadmin:
+        profiles: [tools]
         image: phpmyadmin
         restart: always
         environment:
-            - "PMA_HOST=${DB_HOST}"
-            - "PMA_USER=${DB_USERNAME}"
-            - "PMA_PASSWORD=${DB_PASSWORD}"
+            - "PMA_HOST=mysql"
             - "UPLOAD_LIMIT=64M"
         ports:
-            - 8080:80
+            - "127.0.0.1:${PMA_PORT:-8080}:80"
         depends_on:
             - mysql
         networks:
@@ -62,8 +62,6 @@ services:
     redis:
         image: 'redis:alpine'
         restart: always
-        ports:
-            - '${REDIS_PORT:-6379}:6379'
         volumes:
             - 'redis:/data'
         healthcheck:
